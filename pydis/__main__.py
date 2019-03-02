@@ -135,13 +135,19 @@ class RedisProtocol(asyncio.Protocol):
         return b":%d\r\n" % (value,)
 
     def lpush(self, key, *values):
-        deque = self.dictionary.get(key, collections.deque())
+        try:
+            deque = self.dictionary[key]  # type: collections.deque
+        except KeyError:
+            deque = collection.deque()
         deque.extendleft(values)
         self.dictionary[key] = deque
         return b":%d\r\n" % (len(deque),)
 
     def rpush(self, key, *values):
-        deque = self.dictionary.get(key, collections.deque())
+        try:
+            deque = self.dictionary[key]  # type: collections.deque
+        except KeyError:
+            deque = collection.deque()
         deque.extend(values)
         self.dictionary[key] = deque
         return b":%d\r\n" % (len(deque),)
@@ -163,7 +169,10 @@ class RedisProtocol(asyncio.Protocol):
         return b"$%d\r\n%s\r\n" % (len(value), value)
 
     def sadd(self, key, *members):
-        set_ = self.dictionary.get(key, set())
+        try:
+            set_ = self.dictionary[key]  # type: set
+        except KeyError:
+            set_ = set()
         prev_size = len(set_)
         for member in members:
             set_.add(member)
@@ -171,7 +180,10 @@ class RedisProtocol(asyncio.Protocol):
         return b":%d\r\n" % (len(set_) - prev_size,)
 
     def hset(self, key, field, value):
-        hash_ = self.dictionary.get(key, {})
+        try:
+            hash_ = self.dictionary[key]  # type: dict
+        except KeyError:
+            hash_ = {}
         ret = int(field in hash_)
         hash_[field] = value
         self.dictionary[key] = hash_
